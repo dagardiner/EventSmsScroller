@@ -1,0 +1,77 @@
+<html>
+    <head>
+        <title>Wedding Messages</title>
+        <style>
+            body {
+                background-color: #000;
+                margin: 0;
+                padding: 0;
+            }
+            .messageList {
+                width:1000px;
+                margin-left: auto;
+                margin-right:auto;
+                position: relative;
+                top: 0px;
+                display: block
+            }
+            .messageContainer {
+                background-color:#333;
+                margin:25px;
+            }
+            .button {
+                width: 100px;
+                background-color: #F00;
+                margin-bottom: 20px;
+                cursor: pointer;
+            }
+            .messageBody {
+                color:#CCC;
+                font-size: 36px;
+                font-family: sans-serif;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="mainContainer">
+            <div class="messageList" id="messageList"></div>
+        </div>
+         
+        <script id="messageTemplate" type="text/x-jQuery-tmpl">
+            <div class="messageContainer" id="messageKey${RowKey}">
+                <div class="button" onclick="hideMessage('${PartitionKey}', '${RowKey}');">Hide</div>
+                <div class="messageBody">${Text}</div>
+            </div>
+        </script>
+
+        <script type="text/javascript" src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.4.4.js"></script>
+        <script type="text/javascript" src="https://ajax.aspnetcdn.com/ajax/jquery.templates/beta1/jquery.tmpl.js"></script>
+        
+        <script type="text/javascript">
+            var appServiceName = "{INSERT APP SERVICE NAME HERE}";
+            var getDataKey = "{INSERT KEY HERE}";
+            var hideRecordKey = "{INSERT KEY HERE}";
+
+            updateData();
+            
+            function updateData() {
+                $.get("https://" + appServiceName + ".azurewebsites.net/api/GetData?code=" + getDataKey, function( data ) {
+                    var parsedData = jQuery.parseJSON(data);
+
+                    $("#messageList").empty();
+
+                    var nonRepeatData = parsedData.filter(function( item ) {
+                        return $("#messageKey" + item.RowKey).length == 0;
+                    });
+
+                    $("#messageTemplate").tmpl(nonRepeatData).appendTo("#messageList");
+                });
+            }
+            function hideMessage(part, rowKey) {
+                $.get("https://" + appServiceName + ".azurewebsites.net/api/HideRecord?code=" + hideRecordKey + "&part=" + part + "&id=" + rowKey, function( data ) {
+                    updateData();
+                });
+            }
+        </script>
+    </body>
+</html>

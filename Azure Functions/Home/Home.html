@@ -1,0 +1,97 @@
+<html>
+    <head>
+        <title>Wedding Messages</title>
+        <style>
+            body {
+                background-color: #000;
+                margin: 0;
+                padding: 0;
+            }
+            #mainContainer {
+                position: relative;
+                overflow: hidden;
+                max-height:100%;
+            }
+            .messageList {
+                width:1000px;
+                margin-left: auto;
+                margin-right:auto;
+                position: relative;
+                top: 0px;
+                display: block
+            }
+            .messageContainer {
+                background-color:#333;
+                padding:30px;
+                margin:25px;
+            }
+            .messageBody {
+                color:#CCC;
+                font-size: 36px;
+                font-family: sans-serif;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="mainContainer">
+            <div class="messageList" id="messageList"></div>
+            <div class="messageList" id="messageListDupe"></div>
+        </div>
+         
+        <script id="messageTemplate" type="text/x-jQuery-tmpl">
+            <div class="messageContainer" id="messageKey${RowKey}">
+                <div class="messageBody">${Text}</div>
+            </div>
+        </script>
+
+        <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.4.4.js"></script>
+        <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jquery.templates/beta1/jquery.tmpl.js"></script>
+        
+        <script type="text/javascript">
+            var scrolling = false;
+            var appServiceName = "{INSERT APP SERVICE NAME HERE}";
+            var getDataKey = "{INSERT KEY HERE}";
+
+            setInterval(updateData, 10000);
+            updateData();
+            
+            function updateData() {
+                $.get("https://" + appServiceName + ".azurewebsites.net/api/GetData?code=" + getDataKey, function( data ) {
+                    var parsedData = jQuery.parseJSON(data);
+
+                    var nonRepeatData = parsedData.filter(function( item ) {
+                        return $("#messageKey" + item.RowKey).length == 0;
+                    });
+
+                    $("#messageTemplate").tmpl(nonRepeatData).appendTo("#messageList");
+
+                    $('#messageListDupe').html($('#messageList').html());
+
+                    if(!scrolling) {
+                        autoScrollUp();
+                        scrolling = true;
+                    }
+
+                });
+            }
+
+            function autoScrollUp(){
+                var contentHeight = $("#messageList").outerHeight();
+                var duration = contentHeight * 10;
+                if(duration < 5000) delay = 5000;
+
+                $("#messageListDupe").css({top: 20})
+                                     .animate({top: -contentHeight},
+                                        duration, //duration
+                                        "linear");
+
+                $("#messageList").css({top: 20})
+                                 .animate({top: -contentHeight},
+                                    duration, //duration
+                                    "linear", 
+                                    autoScrollUp); // and animate
+            }
+        </script>
+            
+    </body>
+</html>
